@@ -17,6 +17,8 @@ import argparse
 
 import problems as pblm
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 if __name__ == "__main__": 
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', type=int, default=20)
@@ -37,15 +39,15 @@ if __name__ == "__main__":
 
     if args.mnist: 
         train_loader, test_loader = pblm.mnist_loaders(args.batch_size)
-        model = pblm.mnist_model().cuda()
+        model = pblm.mnist_model().to(device)
         model.load_state_dict(torch.load('icml/mnist_epochs_100_baseline_model.pth'))
     elif args.svhn: 
         train_loader, test_loader = pblm.svhn_loaders(args.batch_size)
-        model = pblm.svhn_model().cuda()
+        model = pblm.svhn_model().to(device)
         model.load_state_dict(torch.load('pixel2/svhn_small_batch_size_50_epochs_100_epsilon_0.0078_l1_proj_50_l1_test_median_l1_train_median_lr_0.001_opt_adam_schedule_length_20_seed_0_starting_epsilon_0.001_checkpoint.pth')['state_dict'])
     elif args.model == 'cifar': 
         train_loader, test_loader = pblm.cifar_loaders(args.batch_size)
-        model = pblm.cifar_model().cuda()
+        model = pblm.cifar_model().to(device)
         model.load_state_dict(torch.load('pixel2/cifar_small_batch_size_50_epochs_100_epsilon_0.0347_l1_proj_50_l1_test_median_l1_train_median_lr_0.05_momentum_0.9_opt_sgd_schedule_length_20_seed_0_starting_epsilon_0.001_weight_decay_0.0005_checkpoint.pth')['state_dict'])
     elif args.har:
         pass
@@ -66,8 +68,8 @@ if __name__ == "__main__":
 
     for j,(X,y) in enumerate(loader): 
         print('*** Batch {} ***'.format(j))
-        epsilon = Variable(args.epsilon*torch.ones(X.size(0)).cuda(), requires_grad=True)
-        X, y = Variable(X).cuda(), Variable(y).cuda()
+        epsilon = Variable(args.epsilon*torch.ones(X.size(0)).to(device), requires_grad=True)
+        X, y = Variable(X).to(device), Variable(y).to(device)
 
         out = Variable(model(X).data.max(1)[1])
 
@@ -76,7 +78,7 @@ if __name__ == "__main__":
         I = (~(out.data.unsqueeze(1) == torch.arange(num_classes).type_as(out.data).unsqueeze(0)).unsqueeze(2))
         c = (c[I].view(X.size(0),num_classes-1,num_classes))
         if X.is_cuda:
-            c = c.cuda()
+            c = c.to(device)
         alpha = args.alpha
 
         def f(eps): 

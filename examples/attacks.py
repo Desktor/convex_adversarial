@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 from convex_adversarial import robust_loss
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 class Flatten(nn.Module):
     def forward(self, x):
         return x.view(x.size(0), -1)
@@ -68,7 +70,7 @@ def attack(loader, model, epsilon, verbose=False, atk=None,
         p.requires_grad = False
     
     for i, (X,y) in enumerate(loader):
-        X,y = Variable(X.cuda(), requires_grad=True), Variable(y.cuda().long())
+        X,y = Variable(X.to(device), requires_grad=True), Variable(y.to(device).long())
 
         if y.dim() == 2: 
             y = y.squeeze(1)

@@ -21,26 +21,29 @@ from trainer import *
 import math
 import numpy as np
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def select_model(m): 
     if m == 'large': 
-        model = pblm.mnist_model_large().cuda()
+        model = pblm.mnist_model_large().to(device)
         _, test_loader = pblm.mnist_loaders(8)
     elif m == 'wide': 
         print("Using wide model with model_factor={}".format(args.model_factor))
         _, test_loader = pblm.mnist_loaders(64//args.model_factor)
-        model = pblm.mnist_model_wide(args.model_factor).cuda()
+        model = pblm.mnist_model_wide(args.model_factor).to(device)
     elif m == 'deep': 
         print("Using deep model with model_factor={}".format(args.model_factor))
         _, test_loader = pblm.mnist_loaders(64//(2**args.model_factor))
-        model = pblm.mnist_model_deep(args.model_factor).cuda()
+        model = pblm.mnist_model_deep(args.model_factor).to(device)
     elif m == '500': 
-        model = pblm.mnist_500().cuda()
+        model = pblm.mnist_500().to(device)
     else: 
-        model = pblm.mnist_model().cuda() 
+        model = pblm.mnist_model().to(device)
     return model
 
 
 if __name__ == "__main__": 
+    
     args = pblm.argparser(opt='adam', verbose=200, starting_epsilon=0.01)
     print("saving file to {}".format(args.prefix))
     setproctitle.setproctitle(args.prefix)
@@ -51,11 +54,11 @@ if __name__ == "__main__":
     _, test_loader = pblm.mnist_loaders(args.test_batch_size)
 
     torch.manual_seed(args.seed)
-    torch.cuda.manual_seed(args.seed)
+    torch.to(device).manual_seed(args.seed)
 
     for X,y in train_loader: 
         break
-    kwargs = pblm.args2kwargs(args, X=Variable(X.cuda()))
+    kwargs = pblm.args2kwargs(args, X=Variable(X.to(device)))
     best_err = 1
 
     sampler_indices = []

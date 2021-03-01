@@ -17,6 +17,8 @@ from convex_adversarial import Dense, DenseSequential
 import math
 import os
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def model_wide(in_ch, out_width, k): 
     model = nn.Sequential(
         nn.Conv2d(in_ch, 4*k, 4, stride=2, padding=1),
@@ -147,7 +149,7 @@ def svhn_model():
         nn.Linear(32*8*8,100),
         nn.ReLU(),
         nn.Linear(100, 10)
-    ).cuda()
+    ).to(device)
     return model
 
 def har_loaders(batch_size):     

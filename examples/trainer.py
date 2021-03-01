@@ -13,6 +13,8 @@ from attacks import _pgd
 
 DEBUG = False
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def train_robust(loader, model, opt, epsilon, epoch, log, verbose, 
                 real_time=False, clip_grad=None, **kwargs):
     batch_time = AverageMeter()
@@ -26,7 +28,7 @@ def train_robust(loader, model, opt, epsilon, epoch, log, verbose,
 
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda().long()
+        X,y = X.to(device), y.to(device).long()
         if y.dim() == 2: 
             y = y.squeeze(1)
         data_time.update(time.time() - end)
@@ -80,7 +82,7 @@ def train_robust(loader, model, opt, epsilon, epoch, log, verbose,
         if DEBUG and i ==10: 
             break
     print('')
-    torch.cuda.empty_cache()
+    #torch.cuda.empty_cache()
 
 
 def evaluate_robust(loader, model, epsilon, epoch, log, verbose, 
@@ -97,7 +99,7 @@ def evaluate_robust(loader, model, epsilon, epoch, log, verbose,
 
     torch.set_grad_enabled(False)
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda().long()
+        X,y = X.to(device), y.to(device).long()
         if y.dim() == 2: 
             y = y.squeeze(1)
 
@@ -139,7 +141,7 @@ def evaluate_robust(loader, model, epsilon, epoch, log, verbose,
         if DEBUG and i ==10: 
             break
     torch.set_grad_enabled(True)
-    torch.cuda.empty_cache()
+    #torch.cuda.empty_cache()
     print('')
     print(' * Robust error {rerror.avg:.3f}\t'
           'Error {error.avg:.3f}'
@@ -156,7 +158,7 @@ def train_baseline(loader, model, opt, epoch, log, verbose):
 
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda()
+        X,y = X.to(device), y.to(device)
         data_time.update(time.time() - end)
 
         out = model(Variable(X))
@@ -192,7 +194,7 @@ def evaluate_baseline(loader, model, epoch, log, verbose):
 
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda()
+        X,y = X.to(device), y.to(device)
         out = model(Variable(X))
         ce = nn.CrossEntropyLoss()(out, Variable(y))
         err = (out.data.max(1)[1] != y).float().sum()  / X.size(0)
@@ -235,7 +237,7 @@ def train_madry(loader, model, epsilon, opt, epoch, log, verbose):
 
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda()
+        X,y = X.to(device), y.to(device)
         data_time.update(time.time() - end)
 
         # # perturb 
@@ -296,7 +298,7 @@ def evaluate_madry(loader, model, epsilon, epoch, log, verbose):
 
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda()
+        X,y = X.to(device), y.to(device)
         out = model(Variable(X))
         ce = nn.CrossEntropyLoss()(out, Variable(y))
         err = (out.data.max(1)[1] != y).float().sum()  / X.size(0)
@@ -435,8 +437,8 @@ def sampler_robust_cascade(loader, models, epsilon, batch_size, **kwargs):
     for i, (X,y) in enumerate(loader): 
         print('Certifying minibatch {}/{} [current total: {}/{}]'.format(i, len(loader), total, len(dataset)), end='\r')
 
-        X = X.cuda()
-        y = y.cuda()
+        X = X.to(device)
+        y = y.to(device)
 
         _, _, _, _, uncertified = robust_loss_cascade(models, epsilon, 
                                                    Variable(X), 
@@ -470,7 +472,7 @@ def evaluate_robust_cascade(loader, models, epsilon, epoch, log, verbose, **kwar
     torch.set_grad_enabled(False)
     end = time.time()
     for i, (X,y) in enumerate(loader):
-        X,y = X.cuda(), y.cuda().long()
+        X,y = X.to(device), y.to(device).long()
         if y.dim() == 2: 
             y = y.squeeze(1)
         robust_ce, robust_err, ce, err, _ = robust_loss_cascade(models, 
@@ -508,7 +510,7 @@ def evaluate_robust_cascade(loader, models, epsilon, epoch, log, verbose, **kwar
         del X, y, robust_ce, ce
         if DEBUG and i == 10: 
             break
-    torch.cuda.empty_cache()
+    #torch.cuda.empty_cache()
     print('')
     print(' * Robust error {rerror.avg:.3f}\t'
           'Error {error.avg:.3f}'
