@@ -16,8 +16,11 @@ def conda_list():
     return proc.stdout
 
 def conda_check():
-    import torch
-    import torchvision
+    try:
+        import torch
+        import torchvision
+    except ImportError:
+        return False
     
     return torch.__version__=="1.6.0" and torchvision.__version__=="0.8.1"
 

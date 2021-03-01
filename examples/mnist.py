@@ -2,6 +2,10 @@
 # import setGPU
 # waitGPU.wait(utilization=50, available_memory=10000, interval=60)
 # waitGPU.wait(gpu_ids=[1,3], utilization=20, available_memory=10000, interval=60)
+import os, sys
+currentdir = os.path.dirname(os.path.realpath(__file__))
+parentdir = os.path.dirname(currentdir)
+sys.path.append(parentdir)
 
 import torch
 import torch.nn as nn
@@ -54,7 +58,7 @@ if __name__ == "__main__":
     _, test_loader = pblm.mnist_loaders(args.test_batch_size)
 
     torch.manual_seed(args.seed)
-    torch.to(device).manual_seed(args.seed)
+    torch.manual_seed(args.seed)
 
     for X,y in train_loader: 
         break
