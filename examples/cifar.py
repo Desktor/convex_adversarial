@@ -23,18 +23,20 @@ from trainer import *
 import math
 import numpy
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 def select_model(m): 
     if m == 'large': 
         # raise ValueError
-        model = pblm.cifar_model_large().cuda()
+        model = pblm.cifar_model_large().to(device)
     elif m == 'resnet': 
-        model = pblm.cifar_model_resnet(N=args.resnet_N, factor=args.resnet_factor).cuda()
+        model = pblm.cifar_model_resnet(N=args.resnet_N, factor=args.resnet_factor).to(device)
     else: 
-        model = pblm.cifar_model().cuda() 
+        model = pblm.cifar_model().to(device)
     return model
 
 if __name__ == "__main__": 
-    args = pblm.argparser(epsilon = 0.0347, starting_epsilon=0.001, batch_size = 50, 
+    args = pblm.argparser(epsilon = 0.03125, starting_epsilon=0.001, batch_size = 25, 
                 opt='sgd', lr=0.05)
 
     print("saving file to {}".format(args.prefix))
@@ -87,7 +89,7 @@ if __name__ == "__main__":
                                    args.schedule_length)
 
         for t in range(args.epochs):
-            lr_scheduler.step(epoch=max(t-len(eps_schedule), 0))
+            
             if t < len(eps_schedule) and args.starting_epsilon is not None: 
                 epsilon = float(eps_schedule[t])
             else:
@@ -129,6 +131,8 @@ if __name__ == "__main__":
                    test_log, args.verbose, args.real_time,
                    norm_type=args.norm_test, bounded_input=False, 
                    **kwargs)
+            
+            lr_scheduler.step(epoch=max(t-len(eps_schedule), 0))
             
             if err < best_err: 
                 best_err = err
